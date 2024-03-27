@@ -1,0 +1,10 @@
+
+{
+  "profiles": {
+    "MyProjFolders": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7191",
+      "launchBrowser": false
+    }
+  }
+}
