@@ -68,11 +68,11 @@ public class UserInformationRouter
                 return new BadRequestObjectResult(errorJsonResponse);
             }
 
-            string userID = await _userInfoService.GetAllUsers(deviceID);
+            string users = await _userInfoService.GetAllUsers(deviceID);
 
             return new ContentResult
             {
-                Content = userID,
+                Content = users,
                 ContentType = "application/json",
                 StatusCode = 200
             };

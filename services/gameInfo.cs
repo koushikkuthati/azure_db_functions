@@ -41,12 +41,8 @@ public class GameInformationServices
         // Create success response
         var response = new
         {
-            message = "Success",
-            data = new
-            {
                 gameID = gameObject["gameID"],
                 userID = gameObject["userID"],
-            }
         };
 
         // Serialize the response object to JSON
