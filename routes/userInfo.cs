@@ -89,7 +89,7 @@ public class UserInformationRouter
     }
 
 
-    [Function("PrimaryUser")]
+    [Function("UpdatePrimaryUser")]
     public async Task<IActionResult> UpdatePrimaryUser(
         [HttpTrigger(AuthorizationLevel.Function, "put", Route = "user/{userID}/updatePrimaryUser")] HttpRequestData req, string userID)
     {
