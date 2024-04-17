@@ -15,7 +15,7 @@ private static DatabaseConnection? instance;
     List<object[]> userDetailsArray = new List<object[]>();
     
     // Private connection string
-    private string connectionString = "Server=tcp:fishdiv.database.windows.net,1433;Initial Catalog=FishDB;Persist Security Info=False;User ID=Hemanth;Password=Team4fish;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
+    private string connectionString = "Server=tcp:fishdbinstance.database.windows.net,1433;Initial Catalog=fishDatabase;Persist Security Info=False;User ID=Gowtham;Password=Team4Fish;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
 
     // Private SQL connection object
     private SqlConnection connection;

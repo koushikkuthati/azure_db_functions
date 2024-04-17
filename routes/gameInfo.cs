@@ -161,7 +161,7 @@ public class GameInformationRouter
 
     [Function("updateGameCompleted")]
     public async Task<IActionResult> UpdateGameCompletionInformation(
-    [HttpTrigger(AuthorizationLevel.Function, "post", Route = "game/{gameId}/complete")] HttpRequestData req, string gameId)
+    [HttpTrigger(AuthorizationLevel.Function, "put", Route = "game/{gameId}/complete")] HttpRequestData req, string gameId)
     {
         try
         {
