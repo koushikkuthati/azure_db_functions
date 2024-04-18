@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -142,6 +143,7 @@ public class GameInformationRouter
 
 
              bool validUserResponseFlag = bool.Parse(validUserResponse);
+             _logger.LogInformation("Processing a request to update user response"+validUserResponseFlag);
 
             await _gameService.UpdateUserResponse(gameId, validUserResponseFlag);
 
@@ -191,5 +193,44 @@ public class GameInformationRouter
             return new BadRequestObjectResult(ex);
         }
     }
+
+   [Function("getAHighestScore")]
+   public async Task<IActionResult> GetHighestScore(
+       [HttpTrigger(AuthorizationLevel.Function, "get", Route = "game/getHighestGameStats")] HttpRequestData req)
+   {
+       try
+       {
+           _logger.LogInformation("Processing a request to retrive highest score of a user.");
+
+
+           string? userID = req.Query["userID"];
+
+
+           if (string.IsNullOrEmpty(userID))
+           {
+               var errorResponse = new { message = "Error: userID is required." };
+               string errorJsonResponse = JsonConvert.SerializeObject(errorResponse);
+               return new BadRequestObjectResult(errorJsonResponse);
+           }
+
+
+           JObject jsonResponse = await _gameService.RetriveUserHighestScore(userID);
+
+
+           string jsonResult = jsonResponse.ToString();
+           return new ContentResult
+           {
+               Content = jsonResult,
+               ContentType = "application/json",
+               StatusCode = 200
+           };
+       }
+       catch (Exception ex)
+       {
+           _logger.LogError(ex, "Error processing the request");
+           return new BadRequestObjectResult("Error: Invalid request.");
+       }
+   }
+
 
 }

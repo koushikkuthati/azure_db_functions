@@ -16,23 +16,23 @@ public class GameInformationServices
         dbConnection.OpenConnection();
     }
 
-    public async Task<string> CreateGame(string userID)
+    public async Task<string> CreateGame(string userId)
     {
 
-        // Generate gameID and currentDateTime
-        string gameID = generateUniqueGameId(userID);
+        // Generate gameId and currentDateTime
+        string gameId = generateUniquegameId(userId);
         // Create JObject for game object
         JObject gameObject = new JObject();
-        gameObject["userID"] = userID;
-        gameObject["gameID"] = gameID;
+        gameObject["userId"] = userId;
+        gameObject["gameId"] = gameId;
         gameObject["gameCompleted"] = 0;
         gameObject["noOfCorrectAnswers"] = 0;
         gameObject["noOfWrongAnswers"] = 0;
 
         // database insertion
-        string insertQuery = "INSERT INTO GameStatistics (userID, gameID, gameCompleted, noOfCorrectAnswers, noOfWrongAnswers) VALUES ('"
-                     + userID + "', '"
-                     + gameID + "', "
+        string insertQuery = "INSERT INTO GameData (userId, gameId, gameCompleted, noOfCorrectAnswers, noOfWrongAnswers) VALUES ('"
+                     + userId + "', '"
+                     + gameId + "', "
                      + "0, 0, 0);";
 
 
@@ -41,8 +41,8 @@ public class GameInformationServices
         // Create success response
         var response = new
         {
-                gameID = gameObject["gameID"],
-                userID = gameObject["userID"],
+                gameId = gameObject["gameId"],
+                userId = gameObject["userId"],
         };
 
         // Serialize the response object to JSON
@@ -52,19 +52,21 @@ public class GameInformationServices
     }
 
 
-    private string generateUniqueGameId(string deviceId)
+    private string generateUniquegameId(string deviceId)
     {
         string currentTime = DateTime.Now.ToString("yyyyMMddHHmmssfff"); // Current time in yyyyMMddHHmmssfff format
         string gameId = deviceId + "_" + currentTime;
         return gameId;
     }
-    public async Task UpdateUserResponse(string gameID, bool isValidUserResponse)
+    public async Task UpdateUserResponse(string gameId, bool isValidUserResponse)
     {
-        JObject gameObject = await getCurrentStatsOfGameAsync(gameID);
+        JObject gameObject = await getCurrentStatsOfGameAsync(gameId);
 
 
         int noOfCorrectAnswers = (int?)gameObject["noOfCorrectAnswers"] ?? 0;
         int noOfWrongAnswers = (int?)gameObject["noOfWrongAnswers"] ?? 0;
+
+        _logger.LogInformation(gameObject.ToString());
 
         if (isValidUserResponse)
         {
@@ -81,10 +83,10 @@ public class GameInformationServices
     }
 
 
-public async Task UpdateGameCompleted(string gameID, string accuracy, string completion)
+public async Task UpdateGameCompleted(string gameId, string accuracy, string completion)
 {
 
-    JObject gameObject = await getCurrentStatsOfGameAsync(gameID);
+    JObject gameObject = await getCurrentStatsOfGameAsync(gameId);
 
     if (gameObject != null)
     {
@@ -105,7 +107,7 @@ public async Task UpdateGameCompleted(string gameID, string accuracy, string com
 
     private async Task<JObject> getCurrentStatsOfGameAsync(string gameId)
     {
-        string query = "SELECT * FROM GameStatistics WHERE gameID = '" + gameId + "'";
+        string query = "SELECT * FROM GameData WHERE gameId = '" + gameId + "'";
         List<string> gameObjects = await dbConnection.ExecuteQueryAsync(query);
         if (gameObjects.Count > 0)
         {
@@ -118,23 +120,23 @@ public async Task UpdateGameCompleted(string gameID, string accuracy, string com
 
     private async Task SaveGameStatus(JObject gameObject)
     {
-        string updateQuery = "UPDATE GameStatistics SET " +
-                     "userID = '" + gameObject["userID"] + "', " +
+        string updateQuery = "UPDATE GameData SET " +
+                     "userId = '" + gameObject["userId"] + "', " +
                      "noOfCorrectAnswers = " + gameObject["noOfCorrectAnswers"] + ", " +
                      "noOfWrongAnswers = " + gameObject["noOfWrongAnswers"] + ", " +
                      "gameCompleted = " + (Convert.ToBoolean(gameObject["gameCompleted"]) ? 1 : 0) + ", " +
                      "accuracyRate = " + (gameObject["accuracyRate"].Type != JTokenType.Null ? gameObject["accuracyRate"] : "NULL") + ", " +
                      "completionRate = " + (gameObject["completionRate"].Type != JTokenType.Null ? gameObject["completionRate"] : "NULL") +
-                     " WHERE gameID = '" + gameObject["gameID"] + "'";
+                     " WHERE gameId = '" + gameObject["gameId"] + "'";
 
 
         _logger.LogInformation(updateQuery);
         await dbConnection.ExecuteQueryAsync(updateQuery);
     }
 
-    public async Task<JObject> RetriveUserStats(string userID, string gameID)
+    public async Task<JObject> RetriveUserStats(string userId, string gameId)
     {
-        string selectQuery = "SELECT * FROM GameStatistics WHERE gameID = '" + gameID + "' AND userID = '" + userID + "' AND gameCompleted = 1";
+        string selectQuery = "SELECT * FROM GameData WHERE gameId = '" + gameId + "' AND userId = '" + userId + "' AND gameCompleted = 1";
 
         List<string> gameObjects = await dbConnection.ExecuteQueryAsync(selectQuery);
         _logger.LogInformation(gameObjects.Count.ToString());
@@ -148,9 +150,9 @@ public async Task UpdateGameCompleted(string gameID, string accuracy, string com
     }
 
 
-    public async Task<JArray> RetrieveUserStatsForAllGames(string userID)
+    public async Task<JArray> RetrieveUserStatsForAllGames(string userId)
     {
-        string selectQuery = "SELECT * FROM GameStatistics WHERE userID = '" + userID + "' AND gameCompleted = 1";
+        string selectQuery = "SELECT * FROM GameData WHERE userId = '" + userId + "' AND gameCompleted = 1";
 
         List<string> gameObjects = await dbConnection.ExecuteQueryAsync(selectQuery);
 
@@ -161,9 +163,9 @@ public async Task UpdateGameCompleted(string gameID, string accuracy, string com
             foreach (var gameObject in gameObjects)
             {
                 JObject gameJson = JObject.Parse(gameObject); // Parse each JSON string into a JObject
-                if (gameJson["gameID"] != null)
+                if (gameJson["gameId"] != null)
                 {
-                    _logger.LogInformation(gameJson["gameID"].ToString());
+                    _logger.LogInformation(gameJson["gameId"].ToString());
                 }
                 resultArray.Add(gameJson); // Add each game object to the result JArray
             }
@@ -171,5 +173,31 @@ public async Task UpdateGameCompleted(string gameID, string accuracy, string com
         _logger.LogInformation(resultArray.ToString());
         return resultArray;
     }
+
+    public async Task<JObject> RetriveUserHighestScore(string userId)
+   {
+       string selectQuery = "SELECT TOP 1 * FROM GameData WHERE userId = '" + userId + "' AND gameCompleted = 1 ORDER BY noOfCorrectAnswers DESC;";
+
+
+       List<string> gameObjects = await dbConnection.ExecuteQueryAsync(selectQuery);
+        _logger.LogInformation(gameObjects.Count.ToString());
+        if (gameObjects.Count > 0)
+        {
+
+
+            string query = "SELECT TOP 1 Name FROM UserData WHERE userID = '" + userId + "';"; // Concatenated query with TOP 1
+            List<string> userObjects = await dbConnection.ExecuteQueryAsync(query);
+            JObject userObject = JObject.Parse(userObjects[0]); // Parse the JSON string into a JObject
+            string name = userObject["Name"].ToString(); // Convert JToken to string
+            JObject gameObject = JObject.Parse(gameObjects[0]); // Parse the JSON string into a JObject
+            gameObject.Add("Name", name);
+            return gameObject;
+
+        }
+
+
+        return new JObject();
+   }
+
 
 }
